@@ -3,6 +3,24 @@ var app = require('koa')(),
 
 var fs = require('co-fs');
 
+var MIME = {
+    'js'   : 'text/javascript',
+    'html' : 'text/html',
+    'css'  : 'text/css',
+    'xml'  : 'text/xml',
+    'gif'  : 'image/gif',
+    'jpg'  : 'image/jpg',
+    'jpeg' : 'image/jpeg',
+    'png'  : 'image/png',
+    'svg'  : 'image/svg+xml',
+    'json' : 'application/json',
+    'pdf'  : 'application/pdf',
+    'woff' : 'application/x-font-woff',
+    'ttf'  : 'application/x-font-ttf',
+    'otf'  : 'application/x-font-opentype',
+    'eot'  : 'application/vnd.ms-fontobject'
+}
+
 app
     .use(router.routes())
     .use(router.allowedMethods());
@@ -12,7 +30,15 @@ router
         this.body = 'Welcome to http://static.hello13.net/';
     })
     .get('/static/*', function*(next) {
-        this.body = yield handler(this.request.url);
+        var path = this.request.path, type = path.split('.').pop();
+
+        this.set('Access-Control-Allow-Origin', '*');
+        this.set('Content-Type', MIME[type] || 'text/plain');
+
+        var text = yield readFile(path);
+        if( text ) {
+            this.body = text;
+        }
     })
     .get('/image/*', function*(next) {
         // TODO 生成固定尺寸图片
@@ -21,6 +47,7 @@ router
     })
     .get('/combo', function*(next) {
         this.set('Access-Control-Allow-Origin', '*');
+        this.set('Content-Type', 'text/javascript');
 
         var req = this.request,
             resp = this.response;
@@ -32,12 +59,15 @@ router
         }
 
         for (var i = 0, len = resoures.length; i < len; i++) {
-            var resPath = resoures[i],
-                // resType = resPath.split('.').pop(),
-                resText = yield handler(resPath);
+            var path = resoures[i],
+                // resType = path.split('.').pop(),
+                text = yield readFile(path);
 
-            if( resText ) {
-                body.push(resText);
+            if( text ) {
+                var name = path.split('/').pop(),
+                    prefix = '/*___meta___' + name + '*/\n';
+
+                body.push( prefix + text );
             }
         }
 
@@ -46,13 +76,10 @@ router
         }
     });
 
-function* handler(path) {
+function* readFile(path) {
     console.log(path);
 
-    var name = path.split('/').pop(),
-        path = __dirname + path,
-        prefix = '/*___meta___' + name + '*/\n',
-        text = '';
+    path = __dirname + path, text = '';
 
     // 如果dist存在
     if (yield fs.exists(path)) {
@@ -60,7 +87,7 @@ function* handler(path) {
     }
 
     // 返回文件内容
-    return text ? prefix + text : '';
+    return text;
 };
 
 app.listen(3030, function() {
