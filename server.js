@@ -4,6 +4,8 @@ var app = require('koa')(),
 var fs = require('co-fs'),
     gzip = require('node-zopfli');
 
+var StreamConcat = require('stream-concat');
+
 var MIME = {
     'js': 'text/javascript',
     'html': 'text/html',
@@ -39,14 +41,14 @@ router
             'Content-Type': MIME[type] || 'text/plain'
         });
 
-        var text = yield readFile(path);
-        if (text) {
-            if (MIME[type].indexOf('text') >= 0) {
-                this.set('Content-Encoding', 'gzip');
-                this.body = gzip.gzipSync(text, {});
-            } else {
-                this.body = text;
-            }
+        var stream = yield util.readStream(path);
+        if (stream) {
+            this.body = stream;
+
+            // if (MIME[type].indexOf('text') >= 0) {
+            //     this.set('Content-Encoding', 'gzip');
+            //     this.body = this.body.pipe(gzip.createGzip());
+            // }
         }
     })
     .get('/image/*', function*(next) {
@@ -72,7 +74,7 @@ router
 
         for (var i = 0, len = resoures.length; i < len; i++) {
             var path = resoures[i],
-                text = yield readFile(path);
+                text = yield util.readFile(path);
 
             if (text) {
                 var name = path.split('/').pop(),
@@ -80,6 +82,7 @@ router
 
                 body.push(prefix + text);
             }
+
         }
 
         if (body.length) {
@@ -88,18 +91,32 @@ router
         }
     });
 
-function* readFile(path) {
-    console.log(path);
+var util = {
+    readStream: function*(path) {
+        console.log(path);
 
-    path = __dirname + path, text = '';
+        path = __dirname + path, stream = '';
 
-    if (yield fs.exists(path)) {
-        text = yield fs.readFile(path);
+        if (yield fs.exists(path)) {
+            stream = fs.createReadStream(path);
+        }
+
+        // 返回文件内容
+        return stream;
+    },
+    readFile: function*(path) {
+        console.log(path);
+
+        path = __dirname + path, text = '';
+
+        if (yield fs.exists(path)) {
+            text = yield fs.readFile(path);
+        }
+
+        // 返回文件内容
+        return text;
     }
-
-    // 返回文件内容
-    return text;
-};
+}
 
 app.listen(3030, function() {
     console.log('Combo\'s running on port:3030');
