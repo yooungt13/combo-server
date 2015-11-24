@@ -15,6 +15,7 @@
   "dependencies": {
     "co-fs": "^1.2.0",
     "koa": "^1.1.2",
-    "koa-router": "^5.2.3"
+    "koa-router": "^5.2.3",
+    "node-zopfli": "^1.4.0"
   }
 }

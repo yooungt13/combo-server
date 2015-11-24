@@ -1,24 +1,25 @@
 var app = require('koa')(),
     router = require('koa-router')();
 
-var fs = require('co-fs');
+var fs = require('co-fs'),
+    gzip = require('node-zopfli');
 
 var MIME = {
-    'js'   : 'text/javascript',
-    'html' : 'text/html',
-    'css'  : 'text/css',
-    'xml'  : 'text/xml',
-    'gif'  : 'image/gif',
-    'jpg'  : 'image/jpg',
-    'jpeg' : 'image/jpeg',
-    'png'  : 'image/png',
-    'svg'  : 'image/svg+xml',
-    'json' : 'application/json',
-    'pdf'  : 'application/pdf',
-    'woff' : 'application/x-font-woff',
-    'ttf'  : 'application/x-font-ttf',
-    'otf'  : 'application/x-font-opentype',
-    'eot'  : 'application/vnd.ms-fontobject'
+    'js': 'text/javascript',
+    'html': 'text/html',
+    'css': 'text/css',
+    'xml': 'text/xml',
+    'gif': 'image/gif',
+    'jpg': 'image/jpg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'svg': 'image/svg+xml',
+    'json': 'application/json',
+    'pdf': 'application/pdf',
+    'woff': 'application/x-font-woff',
+    'ttf': 'application/x-font-ttf',
+    'otf': 'application/x-font-opentype',
+    'eot': 'application/vnd.ms-fontobject'
 }
 
 app
@@ -30,14 +31,22 @@ router
         this.body = 'Welcome to http://static.hello13.net/';
     })
     .get('/static/*', function*(next) {
-        var path = this.request.path, type = path.split('.').pop();
+        var path = this.request.path,
+            type = path.split('.').pop();
 
-        this.set('Access-Control-Allow-Origin', '*');
-        this.set('Content-Type', MIME[type] || 'text/plain');
+        this.set({
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': MIME[type] || 'text/plain'
+        });
 
         var text = yield readFile(path);
-        if( text ) {
-            this.body = text;
+        if (text) {
+            if (MIME[type].indexOf('text') >= 0) {
+                this.set('Content-Encoding', 'gzip');
+                this.body = gzip.gzipSync(text, {});
+            } else {
+                this.body = text;
+            }
         }
     })
     .get('/image/*', function*(next) {
@@ -46,8 +55,11 @@ router
         console.log(this.request.url);
     })
     .get('/combo', function*(next) {
-        this.set('Access-Control-Allow-Origin', '*');
-        this.set('Content-Type', 'text/javascript');
+        this.set({
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'text/javascript',
+            // 'Content-Encoding': 'gzip'
+        });
 
         var req = this.request,
             resp = this.response;
@@ -60,18 +72,18 @@ router
 
         for (var i = 0, len = resoures.length; i < len; i++) {
             var path = resoures[i],
-                // resType = path.split('.').pop(),
                 text = yield readFile(path);
 
-            if( text ) {
+            if (text) {
                 var name = path.split('/').pop(),
                     prefix = '/*___meta___' + name + '*/\n';
 
-                body.push( prefix + text );
+                body.push(prefix + text);
             }
         }
 
         if (body.length) {
+            // this.body = gzip.gzipSync(new Buffer(body.join('\n')), {});
             this.body = body.join('\n');
         }
     });
@@ -81,7 +93,6 @@ function* readFile(path) {
 
     path = __dirname + path, text = '';
 
-    // 如果dist存在
     if (yield fs.exists(path)) {
         text = yield fs.readFile(path);
     }
