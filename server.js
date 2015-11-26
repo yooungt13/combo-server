@@ -36,6 +36,8 @@ router
         var path = this.request.path,
             type = path.split('.').pop();
 
+        // var stat = yield util.getStat(path);
+
         this.set({
             'Access-Control-Allow-Origin': '*',
             'Content-Type': MIME[type] || 'text/plain'
@@ -47,7 +49,7 @@ router
 
             // if (MIME[type].indexOf('text') >= 0) {
             //     this.set('Content-Encoding', 'gzip');
-            //     this.body = this.body.pipe(gzip.createGzip());
+            //     this.body = stream.pipe(gzip.createGzip());
             // }
         }
     })
@@ -92,6 +94,15 @@ router
     });
 
 var util = {
+    getStat: function*(path) {
+        path = __dirname + path;
+
+        if (yield fs.exists(path)) {
+            return fs.stat(path);
+        }
+
+        return {};
+    },
     readStream: function*(path) {
         console.log(path);
 
