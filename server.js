@@ -32,7 +32,7 @@ router
     .get('/', function*(next) {
         this.body = 'Welcome to http://static.hello13.net/';
     })
-    .get('/static/*', function*(next) {
+    .get('/*', function*(next) {
         var path = this.request.path,
             type = path.split('.').pop();
 
@@ -95,7 +95,7 @@ router
 
 var util = {
     getStat: function*(path) {
-        path = __dirname + path;
+        path = __dirname + '/static' +path;
 
         if (yield fs.exists(path)) {
             return fs.stat(path);
@@ -106,7 +106,7 @@ var util = {
     readStream: function*(path) {
         console.log(path);
 
-        path = __dirname + path, stream = '';
+        path = __dirname + '/static' +path, stream = '';
 
         if (yield fs.exists(path)) {
             stream = fs.createReadStream(path);
@@ -118,7 +118,7 @@ var util = {
     readFile: function*(path) {
         console.log(path);
 
-        path = __dirname + path, text = '';
+        path = __dirname + '/static' +path, text = '';
 
         if (yield fs.exists(path)) {
             text = yield fs.readFile(path);
