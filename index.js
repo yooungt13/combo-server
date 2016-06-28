@@ -40,6 +40,7 @@ router
 
         var lastModified = stat.mtime.toUTCString();
         var ifModifiedSince = this.request.headers['if-modified-since'];
+        // 判断文件是否有改动
         if (ifModifiedSince && ifModifiedSince === lastModified) {
             this.status = 304;
             return;
