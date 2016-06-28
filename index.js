@@ -117,8 +117,6 @@ var util = {
         return {};
     },
     readStream: function*(path) {
-        console.log(path);
-
         path = __dirname + '/static' + path, stream = '';
 
         if (yield fs.exists(path)) {
@@ -129,8 +127,6 @@ var util = {
         return stream;
     },
     readFile: function*(path) {
-        // console.log(path);
-
         path = __dirname + '/static' + path, text = '';
 
         if (yield fs.exists(path)) {
