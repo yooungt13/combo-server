@@ -40,7 +40,8 @@ router
 
         this.set({
             'Access-Control-Allow-Origin': '*',
-            'Content-Type': MIME[type] || 'text/plain'
+            'Content-Type': MIME[type] || 'text/plain',
+            'Expires': new Date(Date.now() + 604800000).toUTCString() // 缓存一星期
         });
 
         var stream = yield util.readStream(path);
@@ -61,7 +62,8 @@ router
     .get('/combo', function*(next) {
         this.set({
             'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'text/javascript'
+            'Content-Type': 'text/javascript',
+            'Expires': new Date(Date.now() + 604800000).toUTCString()
         });
 
         var req = this.request,
@@ -95,7 +97,7 @@ router
 
 var util = {
     getStat: function*(path) {
-        path = __dirname + '/static' +path;
+        path = __dirname + '/static' + path;
 
         if (yield fs.exists(path)) {
             return fs.stat(path);
@@ -106,7 +108,7 @@ var util = {
     readStream: function*(path) {
         // console.log(path);
 
-        path = __dirname + '/static' +path, stream = '';
+        path = __dirname + '/static' + path, stream = '';
 
         if (yield fs.exists(path)) {
             stream = fs.createReadStream(path);
@@ -118,7 +120,7 @@ var util = {
     readFile: function*(path) {
         // console.log(path);
 
-        path = __dirname + '/static' +path, text = '';
+        path = __dirname + '/static' + path, text = '';
 
         if (yield fs.exists(path)) {
             text = yield fs.readFile(path);
