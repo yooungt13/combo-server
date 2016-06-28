@@ -46,7 +46,7 @@ router
 
         var stream = yield util.readStream(path);
         if (stream) {
-            // this.body = stream;
+            this.body = stream;
 
             if (MIME[type].indexOf('text') >= 0) {
                 this.set('Content-Encoding', 'gzip');
