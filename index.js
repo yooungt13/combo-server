@@ -36,12 +36,21 @@ router
         var path = this.request.path,
             type = path.split('.').pop();
 
-        // var stat = yield util.getStat(path);
+        var stat = yield util.getStat(path);
+
+        var lastModified = stat.mtime.toUTCString();
+        var ifModifiedSince = this.request.headers['if-modified-since'];
+        if (ifModifiedSince && ifModifiedSince === lastModified) {
+            this.status = 304;
+            return;
+        }
 
         this.set({
             'Access-Control-Allow-Origin': '*',
             'Content-Type': MIME[type] || 'text/plain',
-            'Expires': new Date(Date.now() + 604800000).toUTCString() // 缓存一星期
+            'Expires': new Date(Date.now() + 604800000).toUTCString(),
+            'Cache-Control': 'public,max-age=604800',
+            'Last-Modified': lastModified
         });
 
         var stream = yield util.readStream(path);
@@ -60,10 +69,12 @@ router
         console.log(this.request.url);
     })
     .get('/combo', function*(next) {
+
         this.set({
             'Access-Control-Allow-Origin': '*',
             'Content-Type': 'text/javascript',
-            'Expires': new Date(Date.now() + 604800000).toUTCString()
+            'Expires': new Date(Date.now() + 604800000).toUTCString(),
+            'Cache-Control': 'public,max-age=604800'
         });
 
         var req = this.request,
@@ -100,13 +111,13 @@ var util = {
         path = __dirname + '/static' + path;
 
         if (yield fs.exists(path)) {
-            return fs.stat(path);
+            return yield fs.stat(path);
         }
 
         return {};
     },
     readStream: function*(path) {
-        // console.log(path);
+        console.log(path);
 
         path = __dirname + '/static' + path, stream = '';
 
