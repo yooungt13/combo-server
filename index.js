@@ -47,10 +47,10 @@ router
         if (stream) {
             this.body = stream;
 
-            // if (MIME[type].indexOf('text') >= 0) {
-            //     this.set('Content-Encoding', 'gzip');
-            //     this.body = stream.pipe(gzip.createGzip());
-            // }
+            if (MIME[type].indexOf('text') >= 0) {
+                this.set('Content-Encoding', 'gzip');
+                this.body = stream.pipe(gzip.createGzip());
+            }
         }
     })
     .get('/image/*', function*(next) {
@@ -61,8 +61,7 @@ router
     .get('/combo', function*(next) {
         this.set({
             'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'text/javascript',
-            // 'Content-Encoding': 'gzip'
+            'Content-Type': 'text/javascript'
         });
 
         var req = this.request,
@@ -88,8 +87,9 @@ router
         }
 
         if (body.length) {
-            // this.body = gzip.gzipSync(new Buffer(body.join('\n')), {});
-            this.body = body.join('\n');
+            this.set('Content-Encoding', 'gzip');
+            this.body = gzip.gzipSync(new Buffer(body.join('\n')), {});
+            // this.body = body.join('\n');
         }
     });
 
@@ -104,7 +104,7 @@ var util = {
         return {};
     },
     readStream: function*(path) {
-        console.log(path);
+        // console.log(path);
 
         path = __dirname + '/static' +path, stream = '';
 
@@ -116,7 +116,7 @@ var util = {
         return stream;
     },
     readFile: function*(path) {
-        console.log(path);
+        // console.log(path);
 
         path = __dirname + '/static' +path, text = '';
 
